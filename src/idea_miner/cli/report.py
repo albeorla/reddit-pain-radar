@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -57,13 +58,16 @@ def report(
         store = AsyncStore(path)
         await store.connect()
 
+        # output_dir can be a path like "reports/run1.md" - use parent dir
+        output_dir = str(Path(output).parent) if output else "reports"
+
         if format.lower() == "json":
             report_path = await generate_json_report(
-                store, run_id=run_id, output_path=output, include_disqualified=include_disqualified
+                store, run_id=run_id, output_dir=output_dir, include_disqualified=include_disqualified
             )
         else:
             report_path = await generate_report(
-                store, run_id=run_id, output_path=output, include_disqualified=include_disqualified
+                store, run_id=run_id, output_dir=output_dir, include_disqualified=include_disqualified
             )
 
         await store.close()
