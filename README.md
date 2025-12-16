@@ -7,12 +7,14 @@ A modern async Python CLI for mining Reddit for microSaaS and side-hustle ideas 
 ## Features
 
 - **No API keys needed** - Uses Reddit RSS feeds + JSON endpoints
-- **Async Reddit ingestion** with `httpx` and concurrency control
-- **Tenacity retries** with exponential backoff + jitter for resilience
+- **Async Reddit ingestion** with `httpx`, connection pooling, and concurrency control  
+- **Robust retries** with exponential backoff, jitter, and 429/rate-limit handling
 - **LangChain structured outputs** for reliable idea extraction and scoring
+- **Evidence-based scoring** with source attribution and signal types
 - **SQLite storage** with async `aiosqlite`
 - **Typer CLI** with subcommands, help, and rich output
-- **Pydantic Settings** for type-safe configuration via environment variables
+- **Pydantic Settings** for type-safe configuration
+- **Modular architecture** with split CLI and store packages
 
 ## Installation
 
@@ -99,6 +101,28 @@ idea-miner fetch -s Entrepreneur -l 25
 idea-miner top -l 10
 ```
 
+### Show Idea Details
+
+```bash
+idea-miner show 1
+```
+
+### Generate Reports
+
+```bash
+# Markdown report
+idea-miner report --run 1
+
+# JSON report
+idea-miner report --run 1 --format json
+```
+
+### View Run History
+
+```bash
+idea-miner runs
+```
+
 ### Export Ideas
 
 ```bash
@@ -117,10 +141,11 @@ idea-miner stats
 
 ## How It Works
 
-1. **RSS Feeds**: Fetches posts from `https://reddit.com/r/{subreddit}/hot.rss`
+1. **RSS Feeds**: Fetches posts from `https://reddit.com/r/{subreddit}/new.rss`
 2. **JSON Comments**: Scrapes comments from `https://reddit.com/r/.../comments/{id}/.json`
 3. **AI Analysis**: Uses LangChain + OpenAI to extract and score business ideas
-4. **SQLite Storage**: Persists posts and scored ideas locally
+4. **Evidence Attribution**: Tracks which quotes came from posts vs comments
+5. **SQLite Storage**: Persists posts and scored ideas locally
 
 ## Scoring Rubric
 
@@ -136,40 +161,56 @@ Ideas are scored 0-10 on five dimensions:
 
 **Total Score**: 0-50 (sum of all dimensions)
 
-Ideas are automatically disqualified if they are:
-- Get-rich-quick or scammy
-- Illegal or unsafe
-- Pure labor disguised as SaaS
-- "AI wrapper" with no unique value
+### Extraction States
+
+- **extracted**: Valid idea identified and scored
+- **not_extractable**: No viable idea (meta post, question only, etc.)
+- **disqualified**: Idea exists but fails quality rules
+
+### Evidence Signals
+
+Each piece of evidence is tagged with:
+- **source**: `post` or `comment`
+- **signal_type**: `pain`, `willingness_to_pay`, `alternatives`, `urgency`, `repetition`, `budget`
 
 ## Project Structure
 
 ```
 src/idea_miner/
-├── __init__.py          # Package init
-├── __main__.py          # Entry point
-├── cli.py               # Typer CLI commands
-├── config.py            # Pydantic Settings
-├── logging_config.py    # Structlog setup
+├── cli/                 # CLI subcommands
+│   ├── __init__.py     # App setup + version
+│   ├── pipeline.py     # run command
+│   ├── fetch.py        # fetch command
+│   ├── ideas.py        # top, show, export
+│   ├── report.py       # report, runs
+│   └── db.py           # init-db, stats
+├── store/               # Storage layer
+│   ├── __init__.py
+│   ├── schema.py       # SQL schema
+│   └── core.py         # AsyncStore class
+├── http_client.py       # Centralized HTTP client
+├── retry_policy.py      # Retry decorators + 429 handling
 ├── reddit_async.py      # RSS + JSON scraping
-├── store.py             # SQLite storage
 ├── models.py            # Pydantic models
 ├── prompts.py           # LLM prompts
-├── extract_async.py     # Idea extraction
-├── score_async.py       # Idea scoring
-├── analyze.py           # Combined analysis
-├── dedupe.py            # Deduplication
-└── pipeline.py          # Orchestration
+├── analyze.py           # Combined extraction + scoring
+├── dedupe.py            # rapidfuzz deduplication
+├── pipeline.py          # Orchestration
+├── report.py            # Report generation
+└── config.py            # Pydantic Settings
 ```
 
 ## Rate Limiting
 
-Reddit may rate-limit aggressive scraping. The tool includes:
-- Semaphore-based concurrency control (default: 8 concurrent requests)
-- 0.5s delay between comment fetches
-- Tenacity retries with exponential backoff
+Reddit may rate-limit aggressive scraping. Built-in protections:
 
-If you see 429 errors, reduce `IDEA_MINER_MAX_CONCURRENCY` or add delays.
+- **Connection pooling**: Max 20 connections, 10 keepalive
+- **Semaphore concurrency**: Default 8 concurrent requests
+- **Polite delays**: 0.5s between comment fetches
+- **429 handling**: Respects `Retry-After` header
+- **Tenacity retries**: Exponential backoff with jitter
+
+If you see 429 errors, reduce `IDEA_MINER_MAX_CONCURRENCY` in your `.env`.
 
 ## Development
 
