@@ -24,10 +24,20 @@ Type "pain-radar --version"
 Enter
 Sleep 1s
 
-# Fetch posts
-Type "pain-radar fetch -s SideProject -l 5"
+# Show available presets
+Type "pain-radar sources"
 Enter
-Sleep 8s
+Sleep 3s
+
+# Add a preset (the new workflow!)
+Type "pain-radar sources-add indie_saas"
+Enter
+Sleep 2s
+
+# Fetch from source sets (no -s flag needed!)
+Type "pain-radar fetch"
+Enter
+Sleep 10s
 
 # Show stats
 Type "pain-radar stats"
@@ -35,12 +45,7 @@ Enter
 Sleep 2s
 
 # Create a watchlist
-Type 'pain-radar alerts-add "saas, startup" --name "SaaS Pain"'
-Enter
-Sleep 2s
-
-# List watchlists
-Type "pain-radar alerts"
+Type 'pain-radar alerts-add "saas, startup, churn" --name "SaaS Pain"'
 Enter
 Sleep 2s
 
