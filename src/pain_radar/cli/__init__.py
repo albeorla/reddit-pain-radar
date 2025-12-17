@@ -46,4 +46,4 @@ def main(
 
 
 # Import and register command modules
-from . import fetch, ideas, pipeline, report, db, cluster, web, alerts  # noqa: E402, F401
+from . import fetch, ideas, pipeline, report, db, cluster, web, alerts, sources  # noqa: E402, F401

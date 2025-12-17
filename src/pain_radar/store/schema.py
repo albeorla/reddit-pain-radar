@@ -155,11 +155,27 @@ CREATE TABLE IF NOT EXISTS alert_matches (
     FOREIGN KEY (signal_id) REFERENCES signals(id)
 );
 
+-- Source sets: curated subreddit bundles for different ICPs
+CREATE TABLE IF NOT EXISTS source_sets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    preset_key TEXT,           -- null if custom, e.g. 'indie_saas'
+    subreddits TEXT NOT NULL,  -- JSON array of subreddit names
+    listing TEXT DEFAULT 'new', -- new, hot, top
+    limit_per_sub INTEGER DEFAULT 25,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_clusters_week ON clusters(week_start);
 CREATE INDEX IF NOT EXISTS idx_alerts_email ON alerts(email);
 CREATE INDEX IF NOT EXISTS idx_watchlists_active ON watchlists(is_active);
 CREATE INDEX IF NOT EXISTS idx_alert_matches_watchlist ON alert_matches(watchlist_id);
 CREATE INDEX IF NOT EXISTS idx_alert_matches_notified ON alert_matches(notified);
+CREATE INDEX IF NOT EXISTS idx_source_sets_active ON source_sets(is_active);
+CREATE INDEX IF NOT EXISTS idx_source_sets_preset ON source_sets(preset_key);
 """
 
 # Migration from old schema (ideas -> signals)

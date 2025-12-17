@@ -818,3 +818,204 @@ class AsyncStore:
             )
             await conn.commit()
 
+    # --- Source Sets Methods ---
+
+    async def create_source_set(
+        self,
+        name: str,
+        subreddits: List[str],
+        description: Optional[str] = None,
+        preset_key: Optional[str] = None,
+        listing: str = "new",
+        limit_per_sub: int = 25,
+    ) -> int:
+        """Create a new source set.
+        
+        Args:
+            name: Display name for the source set
+            subreddits: List of subreddit names
+            description: Optional description
+            preset_key: If created from a preset, the preset key
+            listing: Reddit listing type (new, hot, top)
+            limit_per_sub: Posts to fetch per subreddit
+            
+        Returns:
+            Source set ID
+        """
+        async with self.connection() as conn:
+            now = datetime.now(timezone.utc).isoformat()
+            cursor = await conn.execute(
+                """
+                INSERT INTO source_sets 
+                (name, description, preset_key, subreddits, listing, limit_per_sub, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+                """,
+                (
+                    name,
+                    description,
+                    preset_key,
+                    json.dumps(subreddits),
+                    listing,
+                    limit_per_sub,
+                    now,
+                ),
+            )
+            await conn.commit()
+            source_set_id = cursor.lastrowid
+            logger.info("source_set_created", id=source_set_id, name=name, subreddits=subreddits)
+            return source_set_id
+
+    async def get_source_sets(self, active_only: bool = True) -> List[dict]:
+        """Get all source sets.
+        
+        Args:
+            active_only: Only return active source sets
+            
+        Returns:
+            List of source set dictionaries
+        """
+        async with self.connection() as conn:
+            query = "SELECT * FROM source_sets"
+            if active_only:
+                query += " WHERE is_active = 1"
+            query += " ORDER BY created_at DESC"
+            
+            cursor = await conn.execute(query)
+            rows = await cursor.fetchall()
+            
+        source_sets = []
+        for row in rows:
+            ss = dict(row)
+            ss["subreddits"] = json.loads(ss["subreddits"])
+            source_sets.append(ss)
+        return source_sets
+
+    async def get_source_set(self, source_set_id: int) -> Optional[dict]:
+        """Get a specific source set by ID.
+        
+        Args:
+            source_set_id: Source set ID
+            
+        Returns:
+            Source set dictionary or None
+        """
+        async with self.connection() as conn:
+            cursor = await conn.execute(
+                "SELECT * FROM source_sets WHERE id = ?", (source_set_id,)
+            )
+            row = await cursor.fetchone()
+            
+        if not row:
+            return None
+        ss = dict(row)
+        ss["subreddits"] = json.loads(ss["subreddits"])
+        return ss
+
+    async def get_source_set_by_preset(self, preset_key: str) -> Optional[dict]:
+        """Get a source set by its preset key.
+        
+        Args:
+            preset_key: The preset key (e.g., 'indie_saas')
+            
+        Returns:
+            Source set dictionary or None
+        """
+        async with self.connection() as conn:
+            cursor = await conn.execute(
+                "SELECT * FROM source_sets WHERE preset_key = ? AND is_active = 1",
+                (preset_key,)
+            )
+            row = await cursor.fetchone()
+            
+        if not row:
+            return None
+        ss = dict(row)
+        ss["subreddits"] = json.loads(ss["subreddits"])
+        return ss
+
+    async def update_source_set(
+        self,
+        source_set_id: int,
+        subreddits: Optional[List[str]] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        listing: Optional[str] = None,
+        limit_per_sub: Optional[int] = None,
+    ) -> bool:
+        """Update a source set.
+        
+        Args:
+            source_set_id: Source set ID
+            subreddits: New subreddit list (if updating)
+            name: New name (if updating)
+            description: New description (if updating)
+            listing: New listing type (if updating)
+            limit_per_sub: New limit (if updating)
+            
+        Returns:
+            True if updated
+        """
+        updates = []
+        params = []
+        
+        if subreddits is not None:
+            updates.append("subreddits = ?")
+            params.append(json.dumps(subreddits))
+        if name is not None:
+            updates.append("name = ?")
+            params.append(name)
+        if description is not None:
+            updates.append("description = ?")
+            params.append(description)
+        if listing is not None:
+            updates.append("listing = ?")
+            params.append(listing)
+        if limit_per_sub is not None:
+            updates.append("limit_per_sub = ?")
+            params.append(limit_per_sub)
+        
+        if not updates:
+            return False
+        
+        updates.append("updated_at = ?")
+        params.append(datetime.now(timezone.utc).isoformat())
+        params.append(source_set_id)
+        
+        async with self.connection() as conn:
+            await conn.execute(
+                f"UPDATE source_sets SET {', '.join(updates)} WHERE id = ?",
+                params
+            )
+            await conn.commit()
+            logger.info("source_set_updated", id=source_set_id)
+        return True
+
+    async def delete_source_set(self, source_set_id: int) -> bool:
+        """Delete (deactivate) a source set.
+        
+        Args:
+            source_set_id: Source set ID
+            
+        Returns:
+            True if deleted
+        """
+        async with self.connection() as conn:
+            await conn.execute(
+                "UPDATE source_sets SET is_active = 0 WHERE id = ?",
+                (source_set_id,)
+            )
+            await conn.commit()
+            logger.info("source_set_deleted", id=source_set_id)
+        return True
+
+    async def get_all_active_subreddits(self) -> List[str]:
+        """Get all unique subreddits from active source sets.
+        
+        Returns:
+            Deduplicated list of subreddit names
+        """
+        source_sets = await self.get_source_sets(active_only=True)
+        all_subs = set()
+        for ss in source_sets:
+            all_subs.update(ss["subreddits"])
+        return sorted(list(all_subs))
