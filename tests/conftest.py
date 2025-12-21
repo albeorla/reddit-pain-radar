@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from langchain_core.language_models import BaseChatModel
-from src.pain_radar.models import FullAnalysis, Extraction, Score, ExtractionState, Cluster, ClusterItem, EvidenceSignal, EvidenceType
+from pain_radar.models import FullAnalysis, PainSignal, SignalScore, ExtractionState, Cluster, ClusterItem, EvidenceSignal, DistributionWedge, ExtractionType
+from pain_radar.reddit_async import RedditPost
 
 @pytest.fixture
 def mock_llm():
@@ -14,7 +15,6 @@ def mock_llm():
 @pytest.fixture
 def sample_post():
     """Sample RedditPost for testing."""
-    from src.pain_radar.reddit_async import RedditPost
     return RedditPost(
         id="test_id",
         title="Test Title",
@@ -32,36 +32,48 @@ def sample_post():
 def sample_full_analysis_extracted():
     """Sample FullAnalysis result (EXTRACTED)."""
     return FullAnalysis(
-        extraction=Extraction(
+        extraction=PainSignal(
             extraction_state=ExtractionState.EXTRACTED,
+            extraction_type=ExtractionType.PAIN,
             pain_point="Cannot find X",
             signal_summary="User struggles to find X",
-            evidence_strength="high",
-            extracted_quotes=["I can't find X"],
+            evidence_strength=8,
+            evidence=[
+                EvidenceSignal(
+                    quote="I can't find X",
+                    source="post",
+                    signal_type="pain"
+                )
+            ],
             risk_flags=[]
         ),
-        score=Score(
-            total=85,
-            pain_level=8,
-            commercial_intent=7,
-            specificity=9,
-            comment_quality=8,
-            confidence="high"
+        score=SignalScore(
+            disqualified=False,
+            practicality=8,
+            profitability=7,
+            distribution=8,
+            competition=9,
+            moat=5,
+            confidence=0.9,
+            distribution_wedge=DistributionWedge.SEO,
+            distribution_wedge_detail="SEO for X",
+            competition_landscape=[]
         )
     )
 
 @pytest.fixture
 def sample_cluster_item():
     return ClusterItem(
-        id="item1",
+        id=1,
         summary="Summary 1",
         pain_point="Pain 1",
         subreddit="sub1",
+        url="http://test.url/1",
         evidence=[
             EvidenceSignal(
                 quote="Quote 1",
                 signal_type="pain", 
-                evidence_type=EvidenceType.POST_BODY
+                source="post"
             )
         ]
     )
