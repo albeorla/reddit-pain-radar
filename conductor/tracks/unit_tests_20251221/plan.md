@@ -12,10 +12,10 @@
     - Mock LLM response.
     - Test positive cases (valid pain signals).
     - Test negative cases (no pain signals).
-- [ ] Task: Write tests for filtering logic.
+- [x] Task: Write tests for filtering logic. <!-- id: 9f321d8 -->
     - Test filtering of self-promotion.
     - Test filtering of irrelevant posts.
-- [ ] Task: Write tests for error handling.
+- [x] Task: Write tests for error handling. <!-- id: 088c6c3 -->
     - Test behavior when LLM API fails.
     - Test behavior with malformed input.
 - [ ] Task: Conductor - User Manual Verification 'Testing Analysis Logic' (Protocol in workflow.md)
