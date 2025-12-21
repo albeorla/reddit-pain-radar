@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -46,10 +48,82 @@ class Settings(BaseSettings):
         description="Maximum concurrent requests",
     )
 
-    # Storage
+    # Storage (SQLite for CLI, Postgres for SaaS)
     db_path: str = Field(
         default="pain_radar.sqlite3",
-        description="Path to SQLite database file",
+        description="Path to SQLite database file (CLI mode)",
+    )
+    
+    # ==========================================================================
+    # SAAS CONFIGURATION (used when running as multi-tenant service)
+    # ==========================================================================
+    
+    # Database (Postgres for SaaS)
+    database_url: Optional[str] = Field(
+        default=None,
+        description="PostgreSQL connection URL (e.g., postgresql://user:pass@host:5432/db)",
+    )
+    
+    # Authentication
+    secret_key: str = Field(
+        default="change-me-in-production-use-secrets-generator",
+        description="Secret key for signing sessions and tokens",
+    )
+    magic_link_expiry_minutes: int = Field(
+        default=15,
+        description="Magic link expiration time in minutes",
+    )
+    session_expiry_days: int = Field(
+        default=30,
+        description="Session expiration time in days",
+    )
+    
+    # Stripe billing
+    stripe_secret_key: Optional[str] = Field(
+        default=None,
+        description="Stripe secret key for billing",
+    )
+    stripe_webhook_secret: Optional[str] = Field(
+        default=None,
+        description="Stripe webhook signing secret",
+    )
+    stripe_price_starter_monthly: Optional[str] = Field(
+        default=None,
+        description="Stripe price ID for Starter monthly plan",
+    )
+    stripe_price_pro_monthly: Optional[str] = Field(
+        default=None,
+        description="Stripe price ID for Pro monthly plan",
+    )
+    stripe_price_team_monthly: Optional[str] = Field(
+        default=None,
+        description="Stripe price ID for Team monthly plan",
+    )
+    
+    # Email delivery
+    email_provider: str = Field(
+        default="resend",
+        description="Email provider: resend, postmark, sendgrid",
+    )
+    email_api_key: Optional[str] = Field(
+        default=None,
+        description="Email provider API key",
+    )
+    email_from_address: str = Field(
+        default="noreply@painradar.io",
+        description="From address for transactional emails",
+    )
+    
+    # Redis (for job queue)
+    redis_url: Optional[str] = Field(
+        default=None,
+        description="Redis connection URL for job queue",
+    )
+    
+    # API settings
+    api_rate_limit_per_minute: int = Field(
+        default=60,
+        description="Default API rate limit per minute",
     )
 
     # OpenAI configuration
@@ -78,6 +152,11 @@ class Settings(BaseSettings):
         default="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         description="User agent string for HTTP requests",
     )
+    
+    @property
+    def is_saas_mode(self) -> bool:
+        """Check if running in SaaS mode (Postgres configured)."""
+        return self.database_url is not None
 
 
 def get_settings() -> Settings:
@@ -86,3 +165,4 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
