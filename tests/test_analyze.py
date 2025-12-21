@@ -89,3 +89,14 @@ async def test_extract_pain_signals_error(mock_llm, sample_post):
 
     with pytest.raises(LLMAnalysisError, match="Failed to analyze post"):
         await analyze_post(mock_llm, sample_post)
+
+@pytest.mark.asyncio
+async def test_extract_pain_signals_malformed(mock_llm, sample_post):
+    """Test handling of malformed output from LLM."""
+    mock_llm.with_structured_output.return_value = mock_llm
+    # Simulate ValidationError raised by Pydantic during parsing (if invoke raises it)
+    # OR simulate any other error during processing
+    mock_llm.ainvoke.side_effect = ValueError("Malformed output")
+
+    with pytest.raises(LLMAnalysisError, match="Failed to analyze post"):
+        await analyze_post(mock_llm, sample_post)
