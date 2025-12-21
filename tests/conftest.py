@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from langchain_core.language_models import BaseChatModel
-from pain_radar.models import FullAnalysis, PainSignal, SignalScore, ExtractionState, Cluster, ClusterItem, EvidenceSignal, DistributionWedge, ExtractionType
+from pain_radar.models import FullAnalysis, PainSignal, SignalScore, ExtractionState, Cluster, ClusterItem, EvidenceSignal, DistributionWedge, ExtractionType, CompetitorNote
 from pain_radar.reddit_async import RedditPost
 
 @pytest.fixture
@@ -20,11 +20,11 @@ def sample_post():
         title="Test Title",
         body="Test Body",
         url="http://test.url",
-        author="test_author",
         subreddit="test_subreddit",
-        created_utc=1234567890.0,
+        created_utc=1234567890,
         score=10,
         num_comments=5,
+        permalink="http://test.url/permalink",
         top_comments=["Comment 1", "Comment 2"]
     )
 
@@ -35,8 +35,10 @@ def sample_full_analysis_extracted():
         extraction=PainSignal(
             extraction_state=ExtractionState.EXTRACTED,
             extraction_type=ExtractionType.PAIN,
-            pain_point="Cannot find X",
             signal_summary="User struggles to find X",
+            target_user="Test User",
+            pain_point="Cannot find X",
+            proposed_solution="Build X",
             evidence_strength=8,
             evidence=[
                 EvidenceSignal(
@@ -57,7 +59,9 @@ def sample_full_analysis_extracted():
             confidence=0.9,
             distribution_wedge=DistributionWedge.SEO,
             distribution_wedge_detail="SEO for X",
-            competition_landscape=[]
+            competition_landscape=[
+                CompetitorNote(category="Existing Tools", your_wedge="Cheaper")
+            ]
         )
     )
 
