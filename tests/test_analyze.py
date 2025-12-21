@@ -56,3 +56,36 @@ async def test_extract_pain_signals_negative(mock_llm, sample_post):
     # Verify
     assert result.extraction.extraction_state == ExtractionState.NOT_EXTRACTABLE
     assert result.score is None
+
+@pytest.mark.asyncio
+async def test_extract_pain_signals_disqualified(mock_llm, sample_post):
+    """Test filtering of disqualified posts (e.g. self-promotion)."""
+    disqualified_analysis = FullAnalysis(
+        extraction=PainSignal(
+            extraction_state=ExtractionState.DISQUALIFIED,
+            extraction_type=ExtractionType.IDEA,
+            signal_summary="User promoting their own tool",
+            not_extractable_reason=None,
+            evidence=[],
+            risk_flags=["Self-promotion detected"]
+        ),
+        score=None
+    )
+    mock_llm.with_structured_output.return_value = mock_llm
+    mock_llm.ainvoke.return_value = disqualified_analysis
+
+    # Execute
+    result = await analyze_post(mock_llm, sample_post)
+
+    # Verify
+    assert result.extraction.extraction_state == ExtractionState.DISQUALIFIED
+    assert result.extraction.risk_flags == ["Self-promotion detected"]
+
+@pytest.mark.asyncio
+async def test_extract_pain_signals_error(mock_llm, sample_post):
+    """Test handling of LLM errors."""
+    mock_llm.with_structured_output.return_value = mock_llm
+    mock_llm.ainvoke.side_effect = Exception("API Error")
+
+    with pytest.raises(LLMAnalysisError, match="Failed to analyze post"):
+        await analyze_post(mock_llm, sample_post)
