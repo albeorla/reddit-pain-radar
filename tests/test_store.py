@@ -105,21 +105,6 @@ async def test_async_store_disqualified_signal(sample_post):
         evidence=[],
     )
     
-    signal_id = await store.save_signal(post=sample_post, extraction=extraction)
-    
-    detail = await store.get_signal_detail(signal_id)
-    assert detail["disqualified"] == 0 # Wait, AsyncStore.save_signal sets disqualified from score.disqualified
-    # If score is None, it sets disqualified = 0.
-    
-    # Let's check save_signal implementation for disqualified state when score is missing but extraction is DISQUALIFIED
-    # In core.py:
-    # if score:
-    #     disqualified = 1 if score.disqualified else 0
-    # else:
-    #     disqualified = 0
-    
-    # So if we want it disqualified, we MUST provide a score with disqualified=True
-    
     score = SignalScore(
         disqualified=True,
         disqualify_reasons=["Self-promotion"],
@@ -130,8 +115,57 @@ async def test_async_store_disqualified_signal(sample_post):
         competition_landscape=[CompetitorNote(category="N/A", your_wedge="N/A")]
     )
     
-    signal_id_2 = await store.save_signal(post=sample_post, extraction=extraction, score=score)
-    detail_2 = await store.get_signal_detail(signal_id_2)
-    assert detail_2["disqualified"] == 1
+    signal_id = await store.save_signal(post=sample_post, extraction=extraction, score=score)
+    detail = await store.get_signal_detail(signal_id)
+    assert detail["disqualified"] == 1
+    
+    await store.close()
+
+@pytest.mark.asyncio
+async def test_async_store_source_set_crud():
+    """Test CRUD operations for SourceSets."""
+    db_path = ":memory:"
+    store = AsyncStore(db_path)
+    await store.init_db()
+    
+    # 1. Create Source Set
+    ss_id = await store.create_source_set(
+        name="Test Set",
+        subreddits=["sub1", "sub2"],
+        description="A test set",
+        preset_key="test_preset"
+    )
+    assert ss_id > 0
+    
+    # 2. Get Source Sets
+    sets = await store.get_source_sets()
+    assert len(sets) == 1
+    assert sets[0]["name"] == "Test Set"
+    assert sets[0]["subreddits"] == ["sub1", "sub2"]
+    
+    # 3. Get Specific Source Set
+    ss = await store.get_source_set(ss_id)
+    assert ss is not None
+    assert ss["name"] == "Test Set"
+    
+    # 4. Get by Preset
+    ss_preset = await store.get_source_set_by_preset("test_preset")
+    assert ss_preset is not None
+    assert ss_preset["id"] == ss_id
+    
+    # 5. Update
+    await store.update_source_set(ss_id, name="Updated Name", subreddits=["sub3"])
+    ss_updated = await store.get_source_set(ss_id)
+    assert ss_updated["name"] == "Updated Name"
+    assert ss_updated["subreddits"] == ["sub3"]
+    
+    # 6. Get All Active Subreddits
+    all_subs = await store.get_all_active_subreddits()
+    assert all_subs == ["sub3"]
+    
+    # 7. Delete (Deactivate)
+    await store.delete_source_set(ss_id)
+    sets_active = await store.get_source_sets(active_only=True)
+    assert len(sets_active) == 0
     
     await store.close()
