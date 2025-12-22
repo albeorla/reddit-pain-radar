@@ -27,7 +27,7 @@
     - Test handling of distinct signals.
 - [x] Task: Write tests for cluster metadata generation. <!-- id: c313489 -->
     - Verify cluster naming and summary generation.
-- [ ] Task: Conductor - User Manual Verification 'Testing Clustering Logic' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Testing Clustering Logic' (Protocol in workflow.md)
 
 ## Phase 4: Review and Refine
 - [ ] Task: Run full test suite and check coverage.
