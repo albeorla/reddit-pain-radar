@@ -1,8 +1,9 @@
 """Logic for clustering pain signals into Pain Pattern Clusters."""
 
 import json
-from typing import List
+from typing import List, Optional
 
+from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
@@ -14,12 +15,15 @@ from .config import settings
 class Clusterer:
     """Groups ideas/findings into semantic clusters."""
 
-    def __init__(self, model_name: str = "gpt-4o"):
-        self.llm = ChatOpenAI(
-            model=model_name,
-            api_key=settings.openai_api_key.get_secret_value(),
-            temperature=0.0,
-        )
+    def __init__(self, model_name: str = "gpt-4o", llm: Optional[BaseChatModel] = None):
+        if llm:
+            self.llm = llm
+        else:
+            self.llm = ChatOpenAI(
+                model=model_name,
+                api_key=settings.openai_api_key.get_secret_value(),
+                temperature=0.0,
+            )
 
     async def cluster_items(self, items: List[ClusterItem]) -> List[Cluster]:
         """Cluster a list of items into groups."""
