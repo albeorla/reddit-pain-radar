@@ -30,7 +30,7 @@
 - [x] Task: Conductor - User Manual Verification 'Testing Clustering Logic' (Protocol in workflow.md)
 
 ## Phase 4: Review and Refine
-- [ ] Task: Run full test suite and check coverage.
+- [~] Task: Run full test suite and check coverage.
     - Execute `pytest --cov=src/pain_radar`.
     - Ensure coverage meets the 80% target.
 - [ ] Task: Refactor code if necessary to improve testability or fix bugs discovered during testing.
