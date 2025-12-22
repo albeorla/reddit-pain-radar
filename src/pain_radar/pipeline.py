@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
 
 from langchain_core.language_models import BaseChatModel
 
@@ -12,7 +11,13 @@ from .analyze import LLMAnalysisError, analyze_post
 from .config import Settings
 from .logging_config import get_logger
 from .models import FullAnalysis
-from .progress import advance_analyze, advance_fetch, complete_analyze, complete_fetch, start_analyze_task, start_fetch_task
+from .progress import (
+    advance_analyze,
+    complete_analyze,
+    complete_fetch,
+    start_analyze_task,
+    start_fetch_task,
+)
 from .reddit_async import RedditPost, fetch_all_subreddits
 from .store import AsyncStore
 
@@ -23,13 +28,13 @@ logger = get_logger(__name__)
 class PipelineResult:
     """Result from running the pipeline."""
 
-    run_id: Optional[int]
+    run_id: int | None
     posts_fetched: int
     posts_analyzed: int
     signals_saved: int
     errors: int
     qualified_signals: int
-    top_signals: List[dict]
+    top_signals: list[dict]
 
 
 async def process_post(
@@ -37,8 +42,8 @@ async def process_post(
     store: AsyncStore,
     post: RedditPost,
     sem: asyncio.Semaphore,
-    run_id: Optional[int] = None,
-) -> Tuple[str, Optional[FullAnalysis], Optional[str]]:
+    run_id: int | None = None,
+) -> tuple[str, FullAnalysis | None, str | None]:
     """Process a single post: analyze and save.
 
     Args:
@@ -71,7 +76,7 @@ async def run_pipeline(
     settings: Settings,
     llm: BaseChatModel,
     fetch_new: bool = True,
-    process_limit: Optional[int] = None,
+    process_limit: int | None = None,
 ) -> PipelineResult:
     """Run the full pain signal pipeline.
 
@@ -96,8 +101,8 @@ async def run_pipeline(
     await store.connect()
     await store.init_db()
 
-    posts: List[RedditPost] = []
-    run_id: Optional[int] = None
+    posts: list[RedditPost] = []
+    run_id: int | None = None
 
     try:
         # Create a run record
@@ -109,7 +114,7 @@ async def run_pipeline(
             # Start fetch progress (estimated based on subreddits * limit)
             estimated_posts = len(settings.subreddits) * settings.posts_per_subreddit
             start_fetch_task(estimated_posts)
-            
+
             posts = await fetch_all_subreddits(
                 subreddits=settings.subreddits,
                 listing=settings.listing,
@@ -138,31 +143,35 @@ async def run_pipeline(
         sem = asyncio.Semaphore(settings.max_concurrency)
         tasks = [process_post(llm, store, post, sem, run_id) for post in posts]
         results = await asyncio.gather(*tasks)
-        
+
         complete_analyze()
 
         # Count results by extraction state
         from .models import ExtractionState
-        
+
         analyzed = sum(1 for _, analysis, _ in results if analysis is not None)
         errors = sum(1 for _, _, error in results if error is not None)
-        
+
         # Count by extraction state
         extracted = sum(
-            1 for _, analysis, _ in results 
+            1
+            for _, analysis, _ in results
             if analysis is not None and analysis.extraction.extraction_state == ExtractionState.EXTRACTED
         )
         not_extractable = sum(
-            1 for _, analysis, _ in results 
+            1
+            for _, analysis, _ in results
             if analysis is not None and analysis.extraction.extraction_state == ExtractionState.NOT_EXTRACTABLE
         )
         disqualified = sum(
-            1 for _, analysis, _ in results 
+            1
+            for _, analysis, _ in results
             if analysis is not None and analysis.extraction.extraction_state == ExtractionState.DISQUALIFIED
         )
         qualified = sum(
-            1 for _, analysis, _ in results 
-            if analysis is not None 
+            1
+            for _, analysis, _ in results
+            if analysis is not None
             and analysis.extraction.extraction_state == ExtractionState.EXTRACTED
             and analysis.score is not None
             and not analysis.score.disqualified
@@ -185,13 +194,13 @@ async def run_pipeline(
         # Log stats
         stats = await store.get_stats()
         logger.info(
-            "pipeline_complete", 
-            run_id=run_id, 
+            "pipeline_complete",
+            run_id=run_id,
             extracted=extracted,
             not_extractable=not_extractable,
             disqualified=disqualified,
             qualified=qualified,
-            **stats
+            **stats,
         )
 
         return PipelineResult(
@@ -204,7 +213,7 @@ async def run_pipeline(
             top_signals=top_signals,
         )
 
-    except Exception as e:
+    except Exception:
         # Update run as failed
         if run_id:
             await store.update_run(
@@ -255,7 +264,7 @@ async def run_fetch_only(settings: Settings) -> int:
 async def run_process_only(
     settings: Settings,
     llm: BaseChatModel,
-    limit: Optional[int] = None,
+    limit: int | None = None,
 ) -> PipelineResult:
     """Process existing unprocessed posts.
 

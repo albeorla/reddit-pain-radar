@@ -8,9 +8,6 @@ from __future__ import annotations
 import typer
 from rich.console import Console
 
-from ..config import Settings, get_settings
-from ..logging_config import configure_logging, get_logger
-
 # Create main app
 app = typer.Typer(
     name="pain-radar",
@@ -46,4 +43,4 @@ def main(
 
 
 # Import and register command modules
-from . import fetch, ideas, pipeline, report, db, cluster, web, alerts, sources  # noqa: E402, F401
+from . import alerts, cluster, db, fetch, ideas, pipeline, report, sources, web  # noqa: E402, F401

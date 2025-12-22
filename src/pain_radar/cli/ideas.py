@@ -6,14 +6,13 @@ import asyncio
 import csv
 import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.table import Table
 
-from . import app, console
 from ..config import get_settings
 from ..store import AsyncStore
+from . import app, console
 
 
 @app.command()
@@ -24,7 +23,7 @@ def top(
         "-l",
         help="Number of signals to show.",
     ),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",
@@ -79,7 +78,7 @@ def top(
 @app.command()
 def show(
     signal_id: int = typer.Argument(..., help="Signal ID to show details for."),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",
@@ -184,7 +183,7 @@ def export(
         "--include-disqualified",
         help="Include disqualified signals.",
     ),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",

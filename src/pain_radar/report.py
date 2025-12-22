@@ -5,14 +5,13 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from .store import AsyncStore
 
 
 async def generate_report(
     store: AsyncStore,
-    run_id: Optional[int] = None,
+    run_id: int | None = None,
     output_dir: str = "reports",
     include_disqualified: bool = False,
 ) -> str:
@@ -28,7 +27,7 @@ async def generate_report(
         Path to generated report
     """
     run = None
-    
+
     # Try to get run info
     if run_id is not None:
         run = await store.get_run(run_id)
@@ -41,22 +40,16 @@ async def generate_report(
             run_id = run["id"]
 
     # Get signals
-    signals = []
+    ideas = []
     if run_id:
-        signals = await store.get_signals_for_run(run_id)
-    
+        ideas = await store.get_signals_for_run(run_id)
+
     # If no signals for this run, get top signals overall
     if not ideas:
-        signals = await store.get_top_signals(limit=50, include_disqualified=True)
-    
+        ideas = await store.get_top_signals(limit=50, include_disqualified=True)
+
     if not ideas:
         raise ValueError("No signals found in database. Run 'pain-radar run' first.")
-
-    # Filter out disqualified if needed
-    if not include_disqualified:
-        qualified_signals = [i for i in ideas if not i.get("disqualified")]
-    else:
-        qualified_signals = ideas
 
     # Get stats
     stats = await store.get_stats()
@@ -72,7 +65,7 @@ async def generate_report(
         }
 
     # Generate report content
-    report = _generate_markdown_report(run, signals, stats)
+    report = _generate_markdown_report(run, ideas, stats)
 
     # Save report
     output_path = Path(output_dir)
@@ -88,7 +81,7 @@ async def generate_report(
     return str(report_path)
 
 
-def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
+def _generate_markdown_report(run: dict, ideas: list[dict], stats: dict) -> str:
     """Generate markdown report content.
 
     Args:
@@ -101,7 +94,7 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
     """
     subreddits = json.loads(run.get("subreddits", "[]")) if run.get("subreddits") else []
     started = run.get("started_at", "Unknown")[:19].replace("T", " ")
-    
+
     lines = [
         f"# Pain Radar Report - Run #{run.get('id', 'N/A')}",
         "",
@@ -111,8 +104,8 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
         "",
         "## Summary",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Posts Fetched | {run.get('posts_fetched', stats.get('total_posts', 0))} |",
         f"| Posts Analyzed | {run.get('posts_analyzed', stats.get('processed_posts', 0))} |",
         f"| Ideas Extracted | {len(ideas)} |",
@@ -124,32 +117,36 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
     # Top signals section
     qualified = [i for i in ideas if not i.get("disqualified")]
     if qualified:
-        lines.extend([
-            "## 🏆 Top Signals",
-            "",
-        ])
+        lines.extend(
+            [
+                "## 🏆 Top Signals",
+                "",
+            ]
+        )
 
-        for rank, sig in enumerate(qualified[:10], 1):
+        for rank, idea in enumerate(qualified[:10], 1):
             score = idea.get("total_score", 0)
             summary = idea.get("signal_summary", "No summary")
             subreddit = idea.get("subreddit", "unknown")
             permalink = idea.get("permalink", "")
-            
-            lines.extend([
-                f"### #{rank}: {summary[:80]}{'...' if len(summary) > 80 else ''}",
-                "",
-                f"**Score:** {score}/50 | **Subreddit:** r/{subreddit}",
-                "",
-                "| Dimension | Score |",
-                "|-----------|-------|",
-                f"| Practicality | {idea.get('practicality', '-')}/10 |",
-                f"| Profitability | {idea.get('profitability', '-')}/10 |",
-                f"| Distribution | {idea.get('distribution', '-')}/10 |",
-                f"| Competition | {idea.get('competition', '-')}/10 |",
-                f"| Moat | {idea.get('moat', '-')}/10 |",
-                "",
-            ])
-            
+
+            lines.extend(
+                [
+                    f"### #{rank}: {summary[:80]}{'...' if len(summary) > 80 else ''}",
+                    "",
+                    f"**Score:** {score}/50 | **Subreddit:** r/{subreddit}",
+                    "",
+                    "| Dimension | Score |",
+                    "|-----------|-------|",
+                    f"| Practicality | {idea.get('practicality', '-')}/10 |",
+                    f"| Profitability | {idea.get('profitability', '-')}/10 |",
+                    f"| Distribution | {idea.get('distribution', '-')}/10 |",
+                    f"| Competition | {idea.get('competition', '-')}/10 |",
+                    f"| Moat | {idea.get('moat', '-')}/10 |",
+                    "",
+                ]
+            )
+
             # Target user and pain point
             if idea.get("target_user"):
                 lines.append(f"**Target User:** {idea.get('target_user')}")
@@ -158,7 +155,7 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
             if idea.get("proposed_solution"):
                 lines.append(f"**Solution:** {idea.get('proposed_solution')}")
             lines.append("")
-            
+
             # Evidence signals
             signals = idea.get("evidence_signals")
             if signals:
@@ -169,7 +166,7 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
                     for sig in signals[:3]:
                         lines.append(f"- {sig}")
                     lines.append("")
-            
+
             # Next steps
             next_steps = idea.get("next_validation_steps")
             if next_steps:
@@ -180,7 +177,7 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
                     for step in next_steps[:3]:
                         lines.append(f"- {step}")
                     lines.append("")
-            
+
             # Why scores
             why = idea.get("why")
             if why:
@@ -191,7 +188,7 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
                     for reason in why[:3]:
                         lines.append(f"- {reason}")
                     lines.append("")
-            
+
             if permalink:
                 lines.append(f"[📎 View Original Post]({permalink})")
             lines.extend(["", "---", ""])
@@ -199,12 +196,14 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
     # Disqualified ideas section
     disqualified = [i for i in ideas if i.get("disqualified")]
     if disqualified:
-        lines.extend([
-            "## ⚠️ Disqualified Signals",
-            "",
-            "These signals were flagged as problematic:",
-            "",
-        ])
+        lines.extend(
+            [
+                "## ⚠️ Disqualified Signals",
+                "",
+                "These signals were flagged as problematic:",
+                "",
+            ]
+        )
         for idea in disqualified[:5]:
             summary = idea.get("signal_summary", "No summary")[:60]
             reasons = idea.get("disqualify_reasons")
@@ -215,18 +214,20 @@ def _generate_markdown_report(run: dict, ideas: List[dict], stats: dict) -> str:
         lines.append("")
 
     # Footer
-    lines.extend([
-        "---",
-        "",
-        "*Report generated by Pain Radar*",
-    ])
+    lines.extend(
+        [
+            "---",
+            "",
+            "*Report generated by Pain Radar*",
+        ]
+    )
 
     return "\n".join(lines)
 
 
 async def generate_json_report(
     store: AsyncStore,
-    run_id: Optional[int] = None,
+    run_id: int | None = None,
     output_dir: str = "reports",
 ) -> str:
     """Generate a JSON report for a pipeline run.
@@ -252,9 +253,9 @@ async def generate_json_report(
             raise ValueError(f"Run {run_id} not found")
 
     # Get signals
-    signals = await store.get_signals_for_run(run_id)
+    ideas = await store.get_signals_for_run(run_id)
     if not ideas:
-        signals = await store.get_top_signals(limit=50, include_disqualified=True)
+        ideas = await store.get_top_signals(limit=50, include_disqualified=True)
 
     # Get stats
     stats = await store.get_stats()
@@ -269,7 +270,14 @@ async def generate_json_report(
 
     # Parse JSON fields in ideas
     for idea in report["ideas"]:
-        for field in ["evidence_signals", "risk_flags", "disqualify_reasons", "why", "next_validation_steps", "top_comments"]:
+        for field in [
+            "evidence_signals",
+            "risk_flags",
+            "disqualify_reasons",
+            "why",
+            "next_validation_steps",
+            "top_comments",
+        ]:
             if idea.get(field) and isinstance(idea[field], str):
                 try:
                     idea[field] = json.loads(idea[field])

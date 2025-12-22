@@ -9,8 +9,9 @@ Provides a properly configured httpx.AsyncClient with:
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Optional
+from datetime import UTC
 
 import httpx
 
@@ -20,10 +21,10 @@ logger = get_logger(__name__)
 
 # Default configuration
 DEFAULT_TIMEOUT = httpx.Timeout(
-    timeout=30.0,      # Total timeout
-    connect=10.0,      # Connection timeout
-    read=20.0,         # Read timeout
-    write=10.0,        # Write timeout
+    timeout=30.0,  # Total timeout
+    connect=10.0,  # Connection timeout
+    read=20.0,  # Read timeout
+    write=10.0,  # Write timeout
 )
 
 DEFAULT_LIMITS = httpx.Limits(
@@ -50,10 +51,10 @@ DEFAULT_USER_AGENT = (
 
 @asynccontextmanager
 async def create_http_client(
-    user_agent: Optional[str] = None,
-    timeout: Optional[httpx.Timeout] = None,
-    limits: Optional[httpx.Limits] = None,
-    extra_headers: Optional[dict] = None,
+    user_agent: str | None = None,
+    timeout: httpx.Timeout | None = None,
+    limits: httpx.Limits | None = None,
+    extra_headers: dict | None = None,
 ) -> AsyncIterator[httpx.AsyncClient]:
     """Create a configured HTTP client for Reddit scraping.
 
@@ -72,7 +73,7 @@ async def create_http_client(
     """
     headers = DEFAULT_HEADERS.copy()
     headers["User-Agent"] = user_agent or DEFAULT_USER_AGENT
-    
+
     if extra_headers:
         headers.update(extra_headers)
 
@@ -93,7 +94,7 @@ async def create_http_client(
         logger.debug("http_client_closed")
 
 
-def parse_retry_after(response: httpx.Response) -> Optional[float]:
+def parse_retry_after(response: httpx.Response) -> float | None:
     """Parse Retry-After header from response.
 
     Args:
@@ -114,11 +115,11 @@ def parse_retry_after(response: httpx.Response) -> Optional[float]:
 
     try:
         # Try parsing as HTTP-date (e.g., "Wed, 21 Oct 2015 07:28:00 GMT")
+        from datetime import datetime
         from email.utils import parsedate_to_datetime
-        from datetime import datetime, timezone
 
         dt = parsedate_to_datetime(retry_after)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         delta = (dt - now).total_seconds()
         return max(0.0, delta)
     except (ValueError, TypeError):

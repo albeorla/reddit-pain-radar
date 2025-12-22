@@ -9,17 +9,15 @@ import asyncio
 import html
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 import feedparser
 import httpx
 from bs4 import BeautifulSoup
 
-from .http_client import create_http_client, parse_retry_after
+from .http_client import create_http_client
 from .logging_config import get_logger
 from .retry_policy import (
     RateLimitError,
-    TransientHTTPError,
     adaptive_sleep,
     check_response_for_retry,
     http_retry,
@@ -47,7 +45,7 @@ class RedditPost:
     num_comments: int
     url: str
     permalink: str
-    top_comments: List[str] = field(default_factory=list)
+    top_comments: list[str] = field(default_factory=list)
 
 
 def _extract_post_id(link: str) -> str:
@@ -66,7 +64,7 @@ def _clean_html(text: str) -> str:
     return soup.get_text(separator=" ").strip()
 
 
-def _parse_rss_entry(entry: dict, subreddit: str) -> Optional[RedditPost]:
+def _parse_rss_entry(entry: dict, subreddit: str) -> RedditPost | None:
     """Parse an RSS feed entry into a RedditPost."""
     try:
         link = entry.get("link", "")
@@ -89,6 +87,7 @@ def _parse_rss_entry(entry: dict, subreddit: str) -> Optional[RedditPost]:
         created_utc = 0
         if "published_parsed" in entry and entry["published_parsed"]:
             import time
+
             created_utc = int(time.mktime(entry["published_parsed"]))
 
         return RedditPost(
@@ -113,7 +112,7 @@ async def _fetch_rss(
     client: httpx.AsyncClient,
     subreddit: str,
     listing: str,
-) -> List[RedditPost]:
+) -> list[RedditPost]:
     """Fetch posts from a subreddit's RSS feed.
 
     Args:
@@ -158,7 +157,7 @@ async def _scrape_comments(
     client: httpx.AsyncClient,
     post: RedditPost,
     limit: int,
-) -> List[str]:
+) -> list[str]:
     """Scrape top comments from a Reddit post page.
 
     Args:
@@ -228,7 +227,7 @@ async def fetch_posts(
     limit: int,
     top_comments: int,
     sem: asyncio.Semaphore,
-) -> List[RedditPost]:
+) -> list[RedditPost]:
     """Fetch posts from a subreddit using RSS and optionally scrape comments.
 
     Args:
@@ -280,13 +279,13 @@ async def fetch_posts(
 
 
 async def fetch_all_subreddits(
-    subreddits: List[str],
+    subreddits: list[str],
     listing: str,
     limit: int,
     top_comments: int,
     max_concurrency: int,
     user_agent: str,
-) -> List[RedditPost]:
+) -> list[RedditPost]:
     """Fetch posts from multiple subreddits.
 
     Args:
@@ -304,19 +303,14 @@ async def fetch_all_subreddits(
 
     # Use shared HTTP client for all requests
     async with create_http_client(user_agent=user_agent) as client:
-        tasks = [
-            fetch_posts(client, sr, listing, limit, top_comments, sem)
-            for sr in subreddits
-        ]
+        tasks = [fetch_posts(client, sr, listing, limit, top_comments, sem) for sr in subreddits]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    all_posts: List[RedditPost] = []
+    all_posts: list[RedditPost] = []
     for i, result in enumerate(results):
         if isinstance(result, Exception):
-            logger.error(
-                "subreddit_failed", subreddit=subreddits[i], error=str(result)
-            )
+            logger.error("subreddit_failed", subreddit=subreddits[i], error=str(result))
         else:
             all_posts.extend(result)
 

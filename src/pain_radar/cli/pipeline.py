@@ -3,71 +3,89 @@
 from __future__ import annotations
 
 import asyncio
-from typing import List, Optional
+from typing import Annotated
 
 import typer
 from langchain_openai import ChatOpenAI
 from rich.table import Table
 
-from . import app, console
 from ..config import get_settings
 from ..logging_config import configure_logging, get_logger
 from ..pipeline import run_pipeline, run_process_only
 from ..progress import create_progress, set_progress
 from ..store import AsyncStore
+from . import app, console
 
 
 @app.command()
 def run(
-    subreddits: Optional[List[str]] = typer.Option(
-        None,
-        "--subreddit",
-        "-s",
-        help="Subreddits to mine (can specify multiple). Overrides source sets.",
-    ),
-    source_set: Optional[int] = typer.Option(
-        None,
-        "--source-set",
-        "-S",
-        help="Source set ID to use.",
-    ),
-    limit: Optional[int] = typer.Option(
-        None,
-        "--limit",
-        "-l",
-        help="Maximum posts per subreddit to fetch.",
-    ),
-    process_limit: Optional[int] = typer.Option(
-        None,
-        "--process-limit",
-        "-p",
-        help="Maximum posts to process with AI.",
-    ),
-    skip_fetch: bool = typer.Option(
-        False,
-        "--skip-fetch",
-        help="Skip fetching new posts, only process existing unprocessed posts.",
-    ),
-    log_level: str = typer.Option(
-        "INFO",
-        "--log-level",
-        help="Logging level: DEBUG, INFO, WARNING, ERROR",
-    ),
-    log_json: bool = typer.Option(
-        False,
-        "--log-json",
-        help="Output logs as JSON.",
-    ),
-    no_progress: bool = typer.Option(
-        False,
-        "--no-progress",
-        help="Disable progress bars (useful for logging).",
-    ),
-    db_path: Optional[str] = typer.Option(
-        None,
-        "--db",
-        help="Path to database file.",
-    ),
+    subreddits: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--subreddit",
+            "-s",
+            help="Subreddits to mine (can specify multiple). Overrides source sets.",
+        ),
+    ] = None,
+    source_set: Annotated[
+        int | None,
+        typer.Option(
+            "--source-set",
+            "-S",
+            help="Source set ID to use.",
+        ),
+    ] = None,
+    limit: Annotated[
+        int | None,
+        typer.Option(
+            "--limit",
+            "-l",
+            help="Maximum posts per subreddit to fetch.",
+        ),
+    ] = None,
+    process_limit: Annotated[
+        int | None,
+        typer.Option(
+            "--process-limit",
+            "-p",
+            help="Maximum posts to process with AI.",
+        ),
+    ] = None,
+    skip_fetch: Annotated[
+        bool,
+        typer.Option(
+            "--skip-fetch",
+            help="Skip fetching new posts, only process existing unprocessed posts.",
+        ),
+    ] = False,
+    log_level: Annotated[
+        str,
+        typer.Option(
+            "--log-level",
+            help="Logging level: DEBUG, INFO, WARNING, ERROR",
+        ),
+    ] = "INFO",
+    log_json: Annotated[
+        bool,
+        typer.Option(
+            "--log-json",
+            help="Output logs as JSON.",
+        ),
+    ] = False,
+    no_progress: Annotated[
+        bool,
+        typer.Option(
+            "--no-progress",
+            help="Disable progress bars (useful for logging).",
+        ),
+    ] = False,
+    db_path: Annotated[
+        str | None,
+        typer.Option(
+            "--db",
+            help="Path to database file.",
+        ),
+    ] = None,
 ):
     """Run the full pain signal pipeline.
 
@@ -82,7 +100,7 @@ def run(
         console.print(f"[red]Configuration error:[/red] {e}")
         console.print("\nMake sure you have a .env file with:")
         console.print("  OPENAI_API_KEY=sk-...")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     path = db_path or settings.db_path
     run_subreddits = []
@@ -179,11 +197,11 @@ def run(
                 set_progress(None)
     except KeyboardInterrupt:
         console.print("\n[yellow]Interrupted[/yellow]")
-        raise typer.Exit(130)
+        raise typer.Exit(130) from None
     except Exception as e:
         logger.exception("pipeline_failed")
         console.print(f"\n[red]Pipeline failed:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     # Display results
     console.print(f"\n[green]✓ Pipeline complete[/green] (Run #{result.run_id})")

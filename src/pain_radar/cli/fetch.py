@@ -3,47 +3,57 @@
 from __future__ import annotations
 
 import asyncio
-from typing import List, Optional
+from typing import Annotated
 
 import typer
 
-from . import app, console
 from ..config import get_settings
 from ..logging_config import configure_logging
 from ..pipeline import run_fetch_only
 from ..store import AsyncStore
+from . import app, console
 
 
 @app.command()
 def fetch(
-    subreddits: Optional[List[str]] = typer.Option(
-        None,
-        "--subreddit",
-        "-s",
-        help="Subreddits to fetch (can specify multiple). Overrides source sets.",
-    ),
-    source_set: Optional[int] = typer.Option(
-        None,
-        "--source-set",
-        "-S",
-        help="Source set ID to fetch from.",
-    ),
-    limit: Optional[int] = typer.Option(
-        None,
-        "--limit",
-        "-l",
-        help="Maximum posts per subreddit.",
-    ),
-    log_level: str = typer.Option(
-        "INFO",
-        "--log-level",
-        help="Logging level.",
-    ),
-    db_path: Optional[str] = typer.Option(
-        None,
-        "--db",
-        help="Path to database file.",
-    ),
+    subreddits: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--subreddit",
+            "-s",
+            help="Subreddits to fetch (can specify multiple). Overrides source sets.",
+        ),
+    ] = None,
+    source_set: Annotated[
+        int | None,
+        typer.Option(
+            "--source-set",
+            "-S",
+            help="Source set ID to fetch from.",
+        ),
+    ] = None,
+    limit: Annotated[
+        int | None,
+        typer.Option(
+            "--limit",
+            "-l",
+            help="Maximum posts per subreddit.",
+        ),
+    ] = None,
+    log_level: Annotated[
+        str,
+        typer.Option(
+            "--log-level",
+            help="Logging level.",
+        ),
+    ] = "INFO",
+    db_path: Annotated[
+        str | None,
+        typer.Option(
+            "--db",
+            help="Path to database file.",
+        ),
+    ] = None,
 ):
     """Fetch posts from Reddit without AI processing.
 
@@ -55,7 +65,7 @@ def fetch(
         settings = get_settings()
     except Exception as e:
         console.print(f"[red]Configuration error:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     path = db_path or settings.db_path
     fetch_subreddits = []
@@ -122,4 +132,4 @@ def fetch(
         console.print(f"[green]✓ Fetched {result} posts[/green]")
     except Exception as e:
         console.print(f"[red]Fetch failed:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e

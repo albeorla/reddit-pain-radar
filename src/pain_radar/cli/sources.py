@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
 
 import typer
 from rich.table import Table
 
-from . import app, console
 from ..config import get_settings
-from ..store import AsyncStore
 from ..presets import PRESETS, get_preset
+from ..store import AsyncStore
+from . import app, console
 
 
 @app.command()
@@ -22,7 +21,7 @@ def sources(
         "-a",
         help="Include inactive source sets.",
     ),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",
@@ -93,19 +92,19 @@ def sources_add(
         ...,
         help="Preset key (e.g., indie_saas, shopify, marketing) or 'custom' for manual.",
     ),
-    name: Optional[str] = typer.Option(
+    name: str | None = typer.Option(
         None,
         "--name",
         "-n",
         help="Custom name (overrides preset name).",
     ),
-    subreddits: Optional[str] = typer.Option(
+    subreddits: str | None = typer.Option(
         None,
         "--subreddits",
         "-s",
         help="Comma-separated subreddits (required if preset_key='custom').",
     ),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",
@@ -138,7 +137,7 @@ def sources_add(
     async def _add():
         store = AsyncStore(path)
         await store.connect()
-        
+
         # Check if preset already exists
         if pkey:
             existing = await store.get_source_set_by_preset(pkey)
@@ -146,7 +145,7 @@ def sources_add(
                 console.print(f"[yellow]Preset '{pkey}' already added as '{existing['name']}'[/yellow]")
                 await store.close()
                 return None
-        
+
         source_set_id = await store.create_source_set(
             name=set_name,
             subreddits=sub_list,
@@ -162,30 +161,30 @@ def sources_add(
         console.print(f"[green]✓ Added source set '{set_name}'[/green]")
         console.print(f"  ID: {source_set_id}")
         console.print(f"  Subreddits: {', '.join(sub_list)}")
-        console.print(f"\nFetch from this source set:")
+        console.print("\nFetch from this source set:")
         console.print(f"  [cyan]pain-radar fetch --source-set {source_set_id}[/cyan]")
 
 
 @app.command("sources-edit")
 def sources_edit(
     source_set_id: int = typer.Argument(..., help="Source set ID to edit."),
-    add: Optional[str] = typer.Option(
+    add: str | None = typer.Option(
         None,
         "--add",
         help="Comma-separated subreddits to add.",
     ),
-    remove: Optional[str] = typer.Option(
+    remove: str | None = typer.Option(
         None,
         "--remove",
         help="Comma-separated subreddits to remove.",
     ),
-    name: Optional[str] = typer.Option(
+    name: str | None = typer.Option(
         None,
         "--name",
         "-n",
         help="New name.",
     ),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",
@@ -198,26 +197,26 @@ def sources_edit(
     async def _edit():
         store = AsyncStore(path)
         await store.connect()
-        
+
         ss = await store.get_source_set(source_set_id)
         if not ss:
             console.print(f"[red]Source set {source_set_id} not found[/red]")
             await store.close()
             return False
-        
+
         current_subs = set(ss["subreddits"])
-        
+
         if add:
             for sub in add.split(","):
                 sub = sub.strip()
                 if sub:
                     current_subs.add(sub)
-        
+
         if remove:
             for sub in remove.split(","):
                 sub = sub.strip()
                 current_subs.discard(sub)
-        
+
         await store.update_source_set(
             source_set_id,
             subreddits=sorted(list(current_subs)),
@@ -236,7 +235,7 @@ def sources_edit(
 @app.command("sources-remove")
 def sources_remove(
     source_set_id: int = typer.Argument(..., help="Source set ID to remove."),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",

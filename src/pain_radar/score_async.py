@@ -24,10 +24,12 @@ class LLMScoringError(Exception):
     pass
 
 
-SCORE_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", SCORE_SYSTEM_PROMPT),
-    ("user", SCORE_USER_TEMPLATE),
-])
+SCORE_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SCORE_SYSTEM_PROMPT),
+        ("user", SCORE_USER_TEMPLATE),
+    ]
+)
 
 
 @retry(
@@ -56,14 +58,16 @@ async def score_idea(llm: BaseChatModel, extraction: PainSignal) -> SignalScore:
         chain = SCORE_PROMPT | llm.with_structured_output(SignalScore)
 
         # Invoke the chain
-        result = await chain.ainvoke({
-            "signal_summary": extraction.signal_summary,
-            "target_user": extraction.target_user,
-            "pain_point": extraction.pain_point,
-            "proposed_solution": extraction.proposed_solution,
-            "evidence_signals": "\n".join(f"- {s}" for s in extraction.evidence_signals) or "None",
-            "risk_flags": "\n".join(f"- {f}" for f in extraction.risk_flags) or "None",
-        })
+        result = await chain.ainvoke(
+            {
+                "signal_summary": extraction.signal_summary,
+                "target_user": extraction.target_user,
+                "pain_point": extraction.pain_point,
+                "proposed_solution": extraction.proposed_solution,
+                "evidence_signals": "\n".join(f"- {s}" for s in extraction.evidence_signals) or "None",
+                "risk_flags": "\n".join(f"- {f}" for f in extraction.risk_flags) or "None",
+            }
+        )
 
         logger.info(
             "idea_scored",

@@ -25,10 +25,12 @@ class LLMAnalysisError(Exception):
     pass
 
 
-FULL_ANALYSIS_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", FULL_ANALYSIS_SYSTEM_PROMPT),
-    ("user", FULL_ANALYSIS_USER_TEMPLATE),
-])
+FULL_ANALYSIS_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", FULL_ANALYSIS_SYSTEM_PROMPT),
+        ("user", FULL_ANALYSIS_USER_TEMPLATE),
+    ]
+)
 
 
 @retry(
@@ -59,20 +61,22 @@ async def analyze_post(llm: BaseChatModel, post: RedditPost) -> FullAnalysis:
         chain = FULL_ANALYSIS_PROMPT | llm.with_structured_output(FullAnalysis)
 
         # Format comments with indices for attribution
-        comments_formatted = "\n".join(
-            f"[{i}] {c}" for i, c in enumerate(post.top_comments)
-        ) if post.top_comments else "(no comments)"
+        comments_formatted = (
+            "\n".join(f"[{i}] {c}" for i, c in enumerate(post.top_comments)) if post.top_comments else "(no comments)"
+        )
 
         # Invoke the chain
-        result = await chain.ainvoke({
-            "title": post.title,
-            "body": post.body or "(no body)",
-            "comments": comments_formatted,
-        })
+        result = await chain.ainvoke(
+            {
+                "title": post.title,
+                "body": post.body or "(no body)",
+                "comments": comments_formatted,
+            }
+        )
 
         # Log results based on extraction state
         state = result.extraction.extraction_state
-        
+
         if state == ExtractionState.EXTRACTED and result.score:
             logger.info(
                 "post_analyzed",

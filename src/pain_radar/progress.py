@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Optional
 
 from rich.console import Console
 from rich.progress import (
@@ -41,18 +40,18 @@ def progress_context():
 
 
 # Shared progress instance for use across async operations
-_current_progress: Optional[Progress] = None
+_current_progress: Progress | None = None
 _fetch_task_id = None
 _analyze_task_id = None
 
 
-def set_progress(progress: Optional[Progress]):
+def set_progress(progress: Progress | None):
     """Set the current progress instance."""
     global _current_progress
     _current_progress = progress
 
 
-def get_progress() -> Optional[Progress]:
+def get_progress() -> Progress | None:
     """Get the current progress instance."""
     return _current_progress
 

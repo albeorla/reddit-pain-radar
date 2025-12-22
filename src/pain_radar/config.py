@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables.
-    
+
     Note: Subreddit configuration has moved to Source Sets.
     Use `pain-radar sources-add <preset>` to configure sources.
     """
@@ -53,17 +51,17 @@ class Settings(BaseSettings):
         default="pain_radar.sqlite3",
         description="Path to SQLite database file (CLI mode)",
     )
-    
+
     # ==========================================================================
     # SAAS CONFIGURATION (used when running as multi-tenant service)
     # ==========================================================================
-    
+
     # Database (Postgres for SaaS)
-    database_url: Optional[str] = Field(
+    database_url: str | None = Field(
         default=None,
         description="PostgreSQL connection URL (e.g., postgresql://user:pass@host:5432/db)",
     )
-    
+
     # Authentication
     secret_key: str = Field(
         default="change-me-in-production-use-secrets-generator",
@@ -77,35 +75,35 @@ class Settings(BaseSettings):
         default=30,
         description="Session expiration time in days",
     )
-    
+
     # Stripe billing
-    stripe_secret_key: Optional[str] = Field(
+    stripe_secret_key: str | None = Field(
         default=None,
         description="Stripe secret key for billing",
     )
-    stripe_webhook_secret: Optional[str] = Field(
+    stripe_webhook_secret: str | None = Field(
         default=None,
         description="Stripe webhook signing secret",
     )
-    stripe_price_starter_monthly: Optional[str] = Field(
+    stripe_price_starter_monthly: str | None = Field(
         default=None,
         description="Stripe price ID for Starter monthly plan",
     )
-    stripe_price_pro_monthly: Optional[str] = Field(
+    stripe_price_pro_monthly: str | None = Field(
         default=None,
         description="Stripe price ID for Pro monthly plan",
     )
-    stripe_price_team_monthly: Optional[str] = Field(
+    stripe_price_team_monthly: str | None = Field(
         default=None,
         description="Stripe price ID for Team monthly plan",
     )
-    
+
     # Email delivery
     email_provider: str = Field(
         default="resend",
         description="Email provider: resend, postmark, sendgrid",
     )
-    email_api_key: Optional[str] = Field(
+    email_api_key: str | None = Field(
         default=None,
         description="Email provider API key",
     )
@@ -113,13 +111,13 @@ class Settings(BaseSettings):
         default="noreply@painradar.io",
         description="From address for transactional emails",
     )
-    
+
     # Redis (for job queue)
-    redis_url: Optional[str] = Field(
+    redis_url: str | None = Field(
         default=None,
         description="Redis connection URL for job queue",
     )
-    
+
     # API settings
     api_rate_limit_per_minute: int = Field(
         default=60,
@@ -152,7 +150,7 @@ class Settings(BaseSettings):
         default="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         description="User agent string for HTTP requests",
     )
-    
+
     @property
     def is_saas_mode(self) -> bool:
         """Check if running in SaaS mode (Postgres configured)."""
@@ -165,4 +163,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-

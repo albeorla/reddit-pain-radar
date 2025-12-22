@@ -6,8 +6,6 @@ similar ideas, even with different word order or phrasing.
 
 from __future__ import annotations
 
-from typing import List, Tuple
-
 from rapidfuzz import fuzz
 
 from .logging_config import get_logger
@@ -57,9 +55,9 @@ def combined_similarity(ext1: PainSignal, ext2: PainSignal) -> float:
 
 
 def dedupe_ideas(
-    ideas: List[Tuple[str, PainSignal]],  # List of (post_id, extraction) tuples
+    ideas: list[tuple[str, PainSignal]],  # List of (post_id, extraction) tuples
     similarity_threshold: float = 0.75,
-) -> List[Tuple[str, PainSignal, List[str]]]:
+) -> list[tuple[str, PainSignal, list[str]]]:
     """Deduplicate ideas based on text similarity using rapidfuzz.
 
     Groups similar ideas together, keeping the first occurrence as canonical.
@@ -78,7 +76,7 @@ def dedupe_ideas(
 
     # Track which ideas have been assigned to a cluster
     assigned = set()
-    clusters: List[Tuple[str, PainSignal, List[str]]] = []
+    clusters: list[tuple[str, PainSignal, list[str]]] = []
 
     for i, (post_id, extraction) in enumerate(ideas):
         if post_id in assigned:
@@ -91,7 +89,7 @@ def dedupe_ideas(
             continue
 
         # This idea starts a new cluster
-        duplicates: List[str] = []
+        duplicates: list[str] = []
 
         # Check remaining ideas for similarity
         for j in range(i + 1, len(ideas)):

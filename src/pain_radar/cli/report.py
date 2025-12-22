@@ -4,26 +4,25 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.table import Table
 
-from . import app, console
 from ..config import get_settings
 from ..report import generate_json_report, generate_report
 from ..store import AsyncStore
+from . import app, console
 
 
 @app.command()
 def report(
-    run_id: Optional[int] = typer.Option(
+    run_id: int | None = typer.Option(
         None,
         "--run",
         "-r",
         help="Run ID to generate report for (uses latest if not specified).",
     ),
-    output: Optional[str] = typer.Option(
+    output: str | None = typer.Option(
         None,
         "--output",
         "-o",
@@ -40,7 +39,7 @@ def report(
         "--include-disqualified",
         help="Include disqualified ideas in report.",
     ),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",
@@ -63,11 +62,17 @@ def report(
 
         if format.lower() == "json":
             report_path = await generate_json_report(
-                store, run_id=run_id, output_dir=output_dir, include_disqualified=include_disqualified
+                store,
+                run_id=run_id,
+                output_dir=output_dir,
+                include_disqualified=include_disqualified,
             )
         else:
             report_path = await generate_report(
-                store, run_id=run_id, output_dir=output_dir, include_disqualified=include_disqualified
+                store,
+                run_id=run_id,
+                output_dir=output_dir,
+                include_disqualified=include_disqualified,
             )
 
         await store.close()
@@ -86,7 +91,7 @@ def runs(
         "-l",
         help="Number of runs to show.",
     ),
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",

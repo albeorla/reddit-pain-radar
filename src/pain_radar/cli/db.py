@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
 
 import typer
 from rich.table import Table
 
-from . import app, console
 from ..config import get_settings
 from ..store import AsyncStore
+from . import app, console
 
 
 @app.command("init-db")
 def init_db(
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",
@@ -40,7 +39,7 @@ def init_db(
 
 @app.command()
 def stats(
-    db_path: Optional[str] = typer.Option(
+    db_path: str | None = typer.Option(
         None,
         "--db",
         help="Path to database file.",

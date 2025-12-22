@@ -25,10 +25,12 @@ class LLMExtractionError(Exception):
     pass
 
 
-EXTRACT_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", EXTRACT_SYSTEM_PROMPT),
-    ("user", EXTRACT_USER_TEMPLATE),
-])
+EXTRACT_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", EXTRACT_SYSTEM_PROMPT),
+        ("user", EXTRACT_USER_TEMPLATE),
+    ]
+)
 
 
 @retry(
@@ -57,16 +59,16 @@ async def extract_idea(llm: BaseChatModel, post: RedditPost) -> PainSignal:
         chain = EXTRACT_PROMPT | llm.with_structured_output(PainSignal)
 
         # Format comments with indices
-        comments_formatted = "\n\n".join(
-            f"[{i}] {c}" for i, c in enumerate(post.top_comments)
-        )
+        comments_formatted = "\n\n".join(f"[{i}] {c}" for i, c in enumerate(post.top_comments))
 
         # Invoke the chain
-        result = await chain.ainvoke({
-            "title": post.title,
-            "body": post.body or "(no body)",
-            "comments": comments_formatted or "(no comments)",
-        })
+        result = await chain.ainvoke(
+            {
+                "title": post.title,
+                "body": post.body or "(no body)",
+                "comments": comments_formatted or "(no comments)",
+            }
+        )
 
         logger.info(
             "idea_extracted",

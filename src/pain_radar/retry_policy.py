@@ -9,12 +9,10 @@ Provides reusable retry decorators with:
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Tuple, Type
 
 import httpx
 from tenacity import (
     RetryCallState,
-    before_sleep_log,
     retry,
     retry_if_exception_type,
     stop_after_attempt,
@@ -27,7 +25,7 @@ logger = get_logger(__name__)
 
 
 # Transient HTTP exceptions that should trigger retries
-HTTP_TRANSIENT_EXCEPTIONS: Tuple[Type[Exception], ...] = (
+HTTP_TRANSIENT_EXCEPTIONS: tuple[type[Exception], ...] = (
     httpx.TimeoutException,
     httpx.ConnectError,
     httpx.ReadError,
@@ -81,12 +79,14 @@ llm_retry = retry(
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential_jitter(initial=2, max=60, jitter=5),
-    retry=retry_if_exception_type((
-        TimeoutError,
-        ConnectionError,
-        # OpenAI/LangChain exceptions are handled by the library,
-        # but we catch common transient issues
-    )),
+    retry=retry_if_exception_type(
+        (
+            TimeoutError,
+            ConnectionError,
+            # OpenAI/LangChain exceptions are handled by the library,
+            # but we catch common transient issues
+        )
+    ),
     before_sleep=log_retry_attempt,
 )
 
@@ -104,10 +104,10 @@ def check_response_for_retry(response: httpx.Response) -> None:
     """
     if response.status_code == 429:
         from .http_client import parse_retry_after
-        
+
         retry_after = parse_retry_after(response)
         raise RateLimitError(
-            f"Rate limited (429)",
+            "Rate limited (429)",
             status_code=429,
             retry_after=retry_after,
         )
@@ -132,7 +132,7 @@ async def adaptive_sleep(retry_after: float | None, default: float = 1.0) -> Non
     sleep_time = retry_after if retry_after is not None else default
     # Cap at 60 seconds to avoid extremely long waits
     sleep_time = min(sleep_time, 60.0)
-    
+
     if sleep_time > 0:
         logger.debug("sleeping", seconds=round(sleep_time, 2))
         await asyncio.sleep(sleep_time)

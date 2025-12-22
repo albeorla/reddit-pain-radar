@@ -1,13 +1,9 @@
 """FastAPI web application for Public Pain Archive."""
 
-import os
-from datetime import datetime, timedelta
-from typing import List, Optional
+from datetime import datetime
 
-from fastapi import FASTAPI, Request, Form, Depends
+from fastapi import FASTAPI, Form
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from .config import get_settings
 from .store import AsyncStore
@@ -36,6 +32,7 @@ HTML_BS = """
 </html>
 """
 
+
 async def get_store():
     store = AsyncStore(settings.db_path)
     await store.connect()
@@ -44,11 +41,13 @@ async def get_store():
     finally:
         await store.close()
 
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     # Show list of weeks available
     # For now, just show a placeholder or latest week
-    return HTML_BS.format(content="""
+    return HTML_BS.format(
+        content="""
         <div class="text-center">
             <h1 class="text-4xl font-bold mb-4">Public Pain Archive</h1>
             <p class="text-xl text-gray-600 mb-8">
@@ -80,25 +79,28 @@ async def read_root():
                 <p class="text-sm text-gray-500 mt-2">I only look for the exact keyword. No spam.</p>
             </div>
         </div>
-    """)
+    """
+    )
+
 
 @app.post("/alerts", response_class=HTMLResponse)
 async def create_alert(email: str = Form(...), keyword: str = Form(...)):
     # Save to DB
     store = AsyncStore(settings.db_path)
     await store.connect()
-    
+
     # Simple insert
     async with store.connection() as conn:
         await conn.execute(
             "INSERT INTO alerts (email, keyword, created_at) VALUES (?, ?, ?)",
-            (email, keyword, datetime.now().isoformat())
+            (email, keyword, datetime.now().isoformat()),
         )
         await conn.commit()
-    
+
     await store.close()
-    
-    return HTML_BS.format(content=f"""
+
+    return HTML_BS.format(
+        content=f"""
         <div class="text-center">
             <h1 class="text-2xl font-bold text-green-600 mb-4">Subscribed!</h1>
             <p>You'll get an email when I spot "<strong>{keyword}</strong>" in a pain cluster.</p>
@@ -106,26 +108,26 @@ async def create_alert(email: str = Form(...), keyword: str = Form(...)):
                 <a href="/" class="text-indigo-600 hover:text-indigo-900">Back to Archive</a>
             </div>
         </div>
-    """)
+    """
+    )
+
 
 @app.get("/archive/latest", response_class=HTMLResponse)
 async def read_latest_archive():
     # Fetch clusters from DB (requires get_clusters method or raw query)
     store = AsyncStore(settings.db_path)
     await store.connect()
-    
+
     # Get clusters from last 7 days
     async with store.connection() as conn:
-        cursor = await conn.execute(
-            "SELECT * FROM clusters ORDER BY created_at DESC LIMIT 10"
-        )
+        cursor = await conn.execute("SELECT * FROM clusters ORDER BY created_at DESC LIMIT 10")
         rows = await cursor.fetchall()
-        
+
     await store.close()
-    
+
     if not rows:
         return HTML_BS.format(content="<p class='text-center'>No reports found yet.</p>")
-        
+
     # Render minimalist report
     clusters_html = ""
     for row in rows:
@@ -140,8 +142,9 @@ async def read_latest_archive():
         </div>
         <hr class="my-8 border-gray-200">
         """
-        
-    return HTML_BS.format(content=f"""
+
+    return HTML_BS.format(
+        content=f"""
         <div class="prose prose-indigo mx-auto">
             <h1 class="text-3xl font-bold mb-8">Latest Pain Clusters ({rows[0]['week_start']})</h1>
             {clusters_html}
@@ -149,5 +152,5 @@ async def read_latest_archive():
                 <p class="font-medium">Want to know when these change? <a href="/" class="text-indigo-600">Get alerts</a>.</p>
             </div>
         </div>
-    """)
-
+    """
+    )

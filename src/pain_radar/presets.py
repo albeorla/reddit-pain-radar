@@ -5,19 +5,20 @@ Users pick a preset (e.g., "Indie SaaS Builders") instead of manually
 selecting subreddits.
 """
 
-from typing import Dict, List, TypedDict
+from typing import TypedDict
 
 
 class PresetConfig(TypedDict):
     """Configuration for a source set preset."""
+
     name: str
     description: str
-    subreddits: List[str]
+    subreddits: list[str]
     listing: str  # "new", "hot", "top"
     limit: int
 
 
-PRESETS: Dict[str, PresetConfig] = {
+PRESETS: dict[str, PresetConfig] = {
     "indie_saas": {
         "name": "Indie SaaS Builders",
         "description": "Solo founders, bootstrappers, micro-SaaS",
@@ -119,11 +120,11 @@ def get_preset(key: str) -> PresetConfig | None:
     return PRESETS.get(key)
 
 
-def list_presets() -> Dict[str, PresetConfig]:
+def list_presets() -> dict[str, PresetConfig]:
     """List all available presets."""
     return PRESETS
 
 
-def get_preset_keys() -> List[str]:
+def get_preset_keys() -> list[str]:
     """Get list of preset keys."""
     return list(PRESETS.keys())

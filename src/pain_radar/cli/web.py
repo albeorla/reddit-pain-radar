@@ -4,7 +4,6 @@ import typer
 import uvicorn
 
 from . import app
-from ..config import get_settings
 
 
 @app.command()
