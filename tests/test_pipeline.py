@@ -132,3 +132,109 @@ async def test_run_pipeline_error(mock_llm):
             )
 
 import asyncio
+from pain_radar.pipeline import run_fetch_only
+
+@pytest.mark.asyncio
+async def test_run_pipeline_existing_posts(mock_llm, sample_post, sample_full_analysis_extracted):
+    """Test running the pipeline with existing unprocessed posts (fetch_new=False)."""
+    class MockRunSettings:
+        def __init__(self):
+            self.subreddits = ["test"]
+            self.listing = "new"
+            self.posts_per_subreddit = 5
+            self.top_comments = 5
+            self.max_concurrency = 1
+            self.db_path = ":memory:"
+            self.user_agent = "test-agent"
+
+    settings = MockRunSettings()
+    
+    with patch("pain_radar.pipeline.analyze_post", return_value=sample_full_analysis_extracted) as mock_analyze:
+        with patch("pain_radar.pipeline.AsyncStore") as mock_store_cls:
+            mock_store = mock_store_cls.return_value
+            mock_store.connect = AsyncMock()
+            mock_store.init_db = AsyncMock()
+            mock_store.close = AsyncMock()
+            mock_store.create_run = AsyncMock(return_value=1)
+            # Mock getting unprocessed posts
+            mock_store.get_unprocessed_posts = AsyncMock(return_value=[sample_post])
+            mock_store.save_signal = AsyncMock()
+            mock_store.get_top_signals = AsyncMock(return_value=[])
+            mock_store.get_stats = AsyncMock(return_value={})
+            mock_store.update_run = AsyncMock()
+            
+            result = await run_pipeline(settings, mock_llm, fetch_new=False)
+            
+            assert isinstance(result, PipelineResult)
+            # Correct assertion
+            assert result.posts_analyzed == 1
+            mock_store.get_unprocessed_posts.assert_called_once()
+            mock_analyze.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_run_pipeline_process_limit(mock_llm, sample_post, sample_full_analysis_extracted):
+    """Test pipeline respects process_limit."""
+    class MockRunSettings:
+        def __init__(self):
+            self.subreddits = ["test"]
+            self.listing = "new"
+            self.posts_per_subreddit = 5
+            self.top_comments = 5
+            self.max_concurrency = 1
+            self.db_path = ":memory:"
+            self.user_agent = "test-agent"
+
+    settings = MockRunSettings()
+    
+    # Create 3 posts
+    posts = [sample_post] * 3
+    
+    with patch("pain_radar.pipeline.analyze_post", return_value=sample_full_analysis_extracted):
+        with patch("pain_radar.pipeline.AsyncStore") as mock_store_cls:
+            mock_store = mock_store_cls.return_value
+            mock_store.connect = AsyncMock()
+            mock_store.init_db = AsyncMock()
+            mock_store.close = AsyncMock()
+            mock_store.create_run = AsyncMock(return_value=1)
+            mock_store.get_unprocessed_posts = AsyncMock(return_value=posts)
+            mock_store.save_signal = AsyncMock()
+            mock_store.get_top_signals = AsyncMock(return_value=[])
+            mock_store.get_stats = AsyncMock(return_value={})
+            mock_store.update_run = AsyncMock()
+            
+            # Set limit to 1
+            result = await run_pipeline(settings, mock_llm, fetch_new=False, process_limit=1)
+            
+            assert result.posts_analyzed == 1
+            # Should have been called 3 times (for 3 posts) if no limit, but we limited to 1
+            # Wait, verify logic: we pass posts[:limit] to tasks.
+            # So analyze_post should be called once.
+            
+@pytest.mark.asyncio
+async def test_run_fetch_only(sample_post):
+    """Test run_fetch_only."""
+    class MockRunSettings:
+        def __init__(self):
+            self.subreddits = ["test"]
+            self.listing = "new"
+            self.posts_per_subreddit = 5
+            self.top_comments = 5
+            self.max_concurrency = 1
+            self.db_path = ":memory:"
+            self.user_agent = "test-agent"
+
+    settings = MockRunSettings()
+    
+    with patch("pain_radar.pipeline.fetch_all_subreddits", return_value=[sample_post]) as mock_fetch:
+        with patch("pain_radar.pipeline.AsyncStore") as mock_store_cls:
+            mock_store = mock_store_cls.return_value
+            mock_store.connect = AsyncMock()
+            mock_store.init_db = AsyncMock()
+            mock_store.close = AsyncMock()
+            mock_store.upsert_posts = AsyncMock()
+            
+            count = await run_fetch_only(settings)
+            
+            assert count == 1
+            mock_fetch.assert_called_once()
+            mock_store.upsert_posts.assert_called_once()
