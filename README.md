@@ -1,7 +1,7 @@
 # Pain Radar 🎯
 
-[![CI](https://github.com/albeorla/reddit-miner/actions/workflows/ci.yml/badge.svg)](https://github.com/albeorla/reddit-miner/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/albeorla/reddit-miner/branch/main/graph/badge.svg?token=YOUR_TOKEN_HERE)](https://codecov.io/gh/albeorla/reddit-miner)
+[![CI](https://github.com/albeorla/reddit-pain-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/albeorla/reddit-pain-radar/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/albeorla/reddit-pain-radar/branch/main/graph/badge.svg)](https://codecov.io/gh/albeorla/reddit-pain-radar)
 
 **A signal tool that finds repeated pain points on Reddit and groups them into weekly "Pain Clusters" with quotes and links.**
 
