@@ -2,7 +2,7 @@
 
 ## Phase 1: Local Pre-commit Configuration
 - [x] Task: Install `pre-commit` and create `.pre-commit-config.yaml`. <!-- id: a1b2c3d --> 1201b34
-- [ ] Task: Configure hooks for `ruff check --fix` and `ruff format`. <!-- id: e5f6g7h -->
+- [x] Task: Configure hooks for `ruff check --fix` and `ruff format`. <!-- id: e5f6g7h --> 99ac635
 - [ ] Task: Verify pre-commit hooks run successfully on all files. <!-- id: i9j0k1l -->
 - [ ] Task: Conductor - User Manual Verification 'Local Pre-commit Configuration' (Protocol in workflow.md)
 
