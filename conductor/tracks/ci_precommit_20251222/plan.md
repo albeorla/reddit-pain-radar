@@ -13,6 +13,6 @@
 - [ ] Task: Conductor - User Manual Verification 'GitHub Actions Workflow Implementation' (Protocol in workflow.md)
 
 ## Phase 3: README and Documentation Cleanup
-- [ ] Task: Update `README.md` with the coverage badge and local development instructions. <!-- id: y1z2a3b -->
+- [x] Task: Update `README.md` with the coverage badge and local development instructions. <!-- id: y1z2a3b --> e6575c7
 - [ ] Task: Ensure `README.md` instructions for tests and linting are up to date. <!-- id: c4d5e6f -->
 - [ ] Task: Conductor - User Manual Verification 'README and Documentation Cleanup' (Protocol in workflow.md)
