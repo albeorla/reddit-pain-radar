@@ -64,7 +64,7 @@ async def score_idea(llm: BaseChatModel, extraction: PainSignal) -> SignalScore:
                 "target_user": extraction.target_user,
                 "pain_point": extraction.pain_point,
                 "proposed_solution": extraction.proposed_solution,
-                "evidence_signals": "\n".join(f"- {s}" for s in extraction.evidence_signals) or "None",
+                "evidence_signals": "\n".join(f"- {s}" for s in extraction.evidence) or "None",
                 "risk_flags": "\n".join(f"- {f}" for f in extraction.risk_flags) or "None",
             }
         )

@@ -74,7 +74,7 @@ async def extract_idea(llm: BaseChatModel, post: RedditPost) -> PainSignal:
             "idea_extracted",
             post_id=post.id,
             idea=result.signal_summary[:100],
-            signals_count=len(result.evidence_signals),
+            signals_count=len(result.evidence),
         )
         return result
 
