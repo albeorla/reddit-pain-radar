@@ -12,10 +12,10 @@
 - [x] Task: Write integration tests for `fetch` and `run` commands (mocking network). <!-- id: a3f4758 -->
 - [x] Task: Conductor - User Manual Verification 'Pipeline and CLI Testing' (Protocol in workflow.md)
 
-## Phase 3: Web and API Testing (`src/pain_radar/web_app.py` & `src/pain_radar/api/`)
+## Phase 3: Web and API Testing (`src/pain_radar/web_app.py` & `src/pain_radar/api/`) [checkpoint: 817d7f8]
 - [x] Task: Write tests for web routes (Dashboard, Signal Detail) using `TestClient`. <!-- id: 69b91b2 -->
 - [x] Task: Write tests for API v1 endpoints (CRUD via JSON). <!-- id: bf5240e -->
-- [ ] Task: Conductor - User Manual Verification 'Web and API Testing' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Web and API Testing' (Protocol in workflow.md)
 
 ## Phase 4: Scripted Verification Suite
 - [ ] Task: Create a repeatable verification script (`scripts/verify_local.sh`).
