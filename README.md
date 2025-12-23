@@ -1,5 +1,8 @@
 # Pain Radar 🎯
 
+[![CI](https://github.com/albeorla/reddit-miner/actions/workflows/ci.yml/badge.svg)](https://github.com/albeorla/reddit-miner/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/albeorla/reddit-miner/branch/main/graph/badge.svg?token=YOUR_TOKEN_HERE)](https://codecov.io/gh/albeorla/reddit-miner)
+
 **A signal tool that finds repeated pain points on Reddit and groups them into weekly "Pain Clusters" with quotes and links.**
 
 No scraping private data. No auto-outreach. Cites sources. Filters self-promo.
@@ -305,11 +308,17 @@ If you see 429 errors, reduce `PAIN_RADAR_MAX_CONCURRENCY` in your `.env`.
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run linting
+# Install pre-commit hooks
+pre-commit install
+
+# Run linting manually
 ruff check src/
 
-# Run tests
-pytest
+# Run tests with coverage
+pytest --cov=src
+
+# Run all pre-commit hooks on all files
+pre-commit run --all-files
 ```
 
 ## License
