@@ -18,7 +18,7 @@
 - [x] Task: Conductor - User Manual Verification 'Web and API Testing' (Protocol in workflow.md)
 
 ## Phase 4: Scripted Verification Suite
-- [~] Task: Create a repeatable verification script (`scripts/verify_local.sh`).
+- [x] Task: Create a repeatable verification script (`scripts/verify_local.sh`). <!-- id: 6da2628 -->
     - The script should:
         1. Initialize a temporary test database.
         2. Run a full `fetch` -> `run` -> `cluster` -> `digest` cycle using mocks.
