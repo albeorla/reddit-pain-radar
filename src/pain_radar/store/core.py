@@ -708,9 +708,9 @@ class AsyncStore:
                 SELECT i.id, i.signal_summary, i.pain_point, i.evidence,
                        p.subreddit, p.url, p.title as post_title
                 FROM signals i
-                JOIN posts p ON s.post_id = p.id
+                JOIN posts p ON i.post_id = p.id
                 WHERE datetime(i.created_at) > datetime('now', ?)
-                AND s.disqualified = 0
+                AND i.disqualified = 0
                 """,
                 (f"-{since_hours} hours",),
             )
