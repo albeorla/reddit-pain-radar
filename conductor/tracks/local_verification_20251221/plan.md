@@ -22,7 +22,7 @@
 - [x] Task: Conductor - User Manual Verification 'Scripted Verification Suite' (Protocol in workflow.md)
 
 ## Phase 5: Coverage Finalization
-- [ ] Task: Run the full test suite and verify >80% coverage.
+- [~] Task: Run the full test suite and verify >80% coverage.
     - Execute `pytest --cov=src/pain_radar`.
     - Identify and address any remaining coverage gaps in core logic.
 - [ ] Task: Conductor - User Manual Verification 'Coverage Finalization' (Protocol in workflow.md)
