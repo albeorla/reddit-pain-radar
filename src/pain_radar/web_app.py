@@ -2,13 +2,13 @@
 
 from datetime import datetime
 
-from fastapi import FASTAPI, Form
+from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 
 from .config import get_settings
 from .store import AsyncStore
 
-app = FASTAPI(title="Pain Radar Public Archive")
+app = FastAPI(title="Pain Radar Public Archive")
 settings = get_settings()
 
 # We might not have a templates dir, so let's use a simple HTML generator or inline templates
