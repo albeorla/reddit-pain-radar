@@ -17,15 +17,9 @@
 - [x] Task: Write tests for API v1 endpoints (CRUD via JSON). <!-- id: bf5240e -->
 - [x] Task: Conductor - User Manual Verification 'Web and API Testing' (Protocol in workflow.md)
 
-## Phase 4: Scripted Verification Suite
+## Phase 4: Scripted Verification Suite [checkpoint: c4d9c2e]
 - [x] Task: Create a repeatable verification script (`scripts/verify_local.sh`). <!-- id: 6da2628 -->
-    - The script should:
-        1. Initialize a temporary test database.
-        2. Run a full `fetch` -> `run` -> `cluster` -> `digest` cycle using mocks.
-        3. Start the FastAPI server in a background process.
-        4. Use `curl` or a python script to check key endpoints.
-        5. Stop the server and clean up.
-- [~] Task: Conductor - User Manual Verification 'Scripted Verification Suite' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Scripted Verification Suite' (Protocol in workflow.md)
 
 ## Phase 5: Coverage Finalization
 - [ ] Task: Run the full test suite and verify >80% coverage.
