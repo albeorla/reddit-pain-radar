@@ -7,7 +7,7 @@
 - [x] Task: Conductor - User Manual Verification 'Storage Layer Testing' (Protocol in workflow.md)
 
 ## Phase 2: Pipeline and CLI Testing (`src/pain_radar/pipeline.py` & `src/pain_radar/cli/`)
-- [~] Task: Write unit tests for `pipeline.py` (mocking reddit and LLM).
+- [x] Task: Write unit tests for `pipeline.py` (mocking reddit and LLM). <!-- id: e6fcfde -->
 - [ ] Task: Write tests for CLI command registration and arguments (using `CliRunner`).
 - [ ] Task: Write integration tests for `fetch` and `run` commands (mocking network).
 - [ ] Task: Conductor - User Manual Verification 'Pipeline and CLI Testing' (Protocol in workflow.md)
