@@ -8,7 +8,7 @@
 
 ## Phase 2: Pipeline and CLI Testing (`src/pain_radar/pipeline.py` & `src/pain_radar/cli/`)
 - [x] Task: Write unit tests for `pipeline.py` (mocking reddit and LLM). <!-- id: e6fcfde -->
-- [~] Task: Write tests for CLI command registration and arguments (using `CliRunner`).
+- [x] Task: Write tests for CLI command registration and arguments (using `CliRunner`). <!-- id: 4e0dcce -->
 - [ ] Task: Write integration tests for `fetch` and `run` commands (mocking network).
 - [ ] Task: Conductor - User Manual Verification 'Pipeline and CLI Testing' (Protocol in workflow.md)
 
